@@ -17,6 +17,12 @@ bool FontEngineInterfaceBitmap::LoadFontFace(const String& file_name, int /*face
 	return FontProviderBitmap::LoadFontFace(file_name);
 }
 
+bool FontEngineInterfaceBitmap::LoadFontFace(const String& file_name, int /*face_index*/, const String& font_family, FontStyle /*style*/, FontWeight /*weight*/,
+    bool /*fallback_face*/)
+{
+	return FontProviderBitmap::LoadFontFace(file_name, font_family);
+}
+
 bool FontEngineInterfaceBitmap::LoadFontFace(Span<const byte> /*data*/, int /*face_index*/, const String& font_family, FontStyle /*style*/, FontWeight /*weight*/,
 	bool /*fallback_face*/)
 {

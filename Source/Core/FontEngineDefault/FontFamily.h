@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FontTypes.h"
+#include "FontProvider.h"
 
 namespace Rml {
 
@@ -25,7 +26,7 @@ public:
 	/// @param[in] weight The weight of the new face.
 	/// @param[in] face_memory Optionally pass ownership of the face's memory to the face itself, automatically releasing it on destruction.
 	/// @return True if the face was loaded successfully, false otherwise.
-	FontFace* AddFace(FontFaceHandleFreetype ft_face, Style::FontStyle style, Style::FontWeight weight, UniquePtr<byte[]> face_memory);
+	FontProvider::FontFaceLoadResult AddFace(FontFaceHandleFreetype ft_face, Style::FontStyle style, Style::FontWeight weight, UniquePtr<byte[]> face_memory, FontFace** face);
 
 	/// Releases resources owned by sized font faces, including their textures and rendered glyphs.
 	void ReleaseFontResources();

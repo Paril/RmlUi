@@ -16,6 +16,12 @@ class FontFaceHandleDefault;
 
 class FontProvider {
 public:
+	enum class FontFaceLoadResult {
+		NoError,
+		Duplicate,
+		Error
+	};
+
 	static bool Initialise();
 	static void Shutdown();
 
@@ -58,7 +64,7 @@ private:
 	bool LoadFontFace(Span<const byte> data, int face_index, bool fallback_face, UniquePtr<byte[]> face_memory, const String& source,
 		String font_family, Style::FontStyle style, Style::FontWeight weight);
 
-	bool AddFace(FontFaceHandleFreetype face, const String& family, Style::FontStyle style, Style::FontWeight weight, bool fallback_face,
+	FontFaceLoadResult AddFace(FontFaceHandleFreetype face, const String& family, Style::FontStyle style, Style::FontWeight weight, bool fallback_face,
 		UniquePtr<byte[]> face_memory);
 
 	using FontFaceList = Vector<FontFace*>;
