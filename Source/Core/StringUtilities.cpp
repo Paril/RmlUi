@@ -248,11 +248,6 @@ void StringUtilities::ExpandString(StringList& string_list, const String& string
 	const char* end_ptr = ptr;
 
 	size_t num_delimiter_values = std::count(string.begin(), string.end(), delimiter);
-	if (num_delimiter_values == 0)
-	{
-		string_list.push_back(StripWhitespace(string));
-		return;
-	}
 	string_list.reserve(string_list.size() + num_delimiter_values + 1);
 
 	while (*ptr)

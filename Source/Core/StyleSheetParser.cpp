@@ -13,6 +13,7 @@
 #include "ControlledLifetimeResource.h"
 #include "StyleSheetFactory.h"
 #include "StyleSheetNode.h"
+#include "../../Include/RmlUi/Core.h"
 #include <algorithm>
 #include <string.h>
 
@@ -274,10 +275,58 @@ public:
 	}
 };
 
+/*
+ * Font faces need a special parser because they have unique properties that
+ * aren't admissible in other property declaration contexts.
+ */
+class FontFacePropertyParser final : public AbstractPropertyParser {
+private:
+	// The dictionary to store the properties in.
+	PropertyDictionary* properties = nullptr;
+	PropertySpecification specification;
+
+	static PropertyId CastId(FontFaceId id) { return static_cast<PropertyId>(id); }
+
+public:
+    StringList sources;
+
+    const PropertySpecification& GetPropertySpecification() { return specification; }
+
+	FontFacePropertyParser() : specification(5, 0)
+	{
+        // standard
+	    specification.RegisterProperty("font-family", "", false, false, CastId(FontFaceId::FontFamily)).AddParser("string");
+	    specification.RegisterProperty("font-weight", "all", false, false, CastId(FontFaceId::FontWeight)).AddParser("keyword", "all=0, normal=400, bold=700").AddParser("number");
+	    specification.RegisterProperty("font-style", "normal", false, false, CastId(FontFaceId::FontStyle)).AddParser("keyword", "normal, italic").AddParser("number");
+        // src handled by Parse
+
+        // extended
+        specification.RegisterProperty("--rmlui-fallback-face", "false", false, false, CastId(FontFaceId::FallbackFace)).AddParser("keyword", "false=0, true=1").AddParser("number");
+        specification.RegisterProperty("--rmlui-face-index", "0", false, false, CastId(FontFaceId::FaceIndex)).AddParser("number");
+	}
+
+	void SetTargetProperties(PropertyDictionary* _properties) { properties = _properties; }
+
+	void Clear() { properties = nullptr; sources.clear(); }
+
+	bool Parse(const String& name, const String& value) override
+	{
+		RMLUI_ASSERT(properties);
+
+        if (name == "src") {
+            StringUtilities::ExpandString(sources, value);
+            return true;
+        }
+
+		return specification.ParsePropertyDeclaration(*properties, name, value);
+	}
+};
+
 struct StyleSheetParserData {
 	// The following parsers are reasonably heavy to initialize, so we construct them during library initialization.
 	SpritesheetPropertyParser spritesheet;
 	MediaQueryPropertyParser media_query;
+	FontFacePropertyParser font_face;
 };
 
 static ControlledLifetimeResource<StyleSheetParserData> style_sheet_property_parsers;
@@ -462,6 +511,47 @@ bool StyleSheetParser::ParseDecoratorBlock(const String& at_name, NamedDecorator
 	properties.SetSourceOfAllProperties(source);
 
 	named_decorator_map.emplace(name, NamedDecorator{std::move(decorator_type), decorator_instancer, std::move(properties)});
+
+	return true;
+}
+
+bool StyleSheetParser::ParseFontFaceBlock(const SharedPtr<const PropertySource>& source)
+{
+	auto& font_face_property_parser = style_sheet_property_parsers->font_face;
+
+    PropertyDictionary properties;
+	font_face_property_parser.SetTargetProperties(&properties);
+
+	ReadProperties(font_face_property_parser);
+
+	// Set non-defined properties to their defaults
+	font_face_property_parser.GetPropertySpecification().SetPropertyDefaults(properties);
+	properties.SetSourceOfAllProperties(source);
+    
+    // check required properties
+    if (!properties.GetProperty(static_cast<Rml::PropertyId>(Rml::FontFaceId::FontFamily))) {
+		Log::Message(Log::LT_WARNING, "@font-face block missing font-family at %s:%d.", stream_file_name.c_str(),
+			line_number);
+        return false;
+    }
+
+    if (font_face_property_parser.sources.empty()) {
+		Log::Message(Log::LT_WARNING, "@font-face block missing src at %s:%d.", stream_file_name.c_str(),
+			line_number);
+        return false;
+    }
+
+    // grab data
+    auto get_property = [&properties](Rml::FontFaceId id) { return properties.GetProperty(static_cast<Rml::PropertyId>(id)); };
+    const Rml::String family = get_property(Rml::FontFaceId::FontFamily)->Get<Rml::String>();
+    const bool is_fallback = get_property(Rml::FontFaceId::FallbackFace)->Get<bool>();
+    const int face_index = get_property(Rml::FontFaceId::FaceIndex)->Get<int>();
+    const Rml::Style::FontWeight weight = get_property(Rml::FontFaceId::FontWeight)->Get<Rml::Style::FontWeight>();
+    const Rml::Style::FontStyle style = get_property(Rml::FontFaceId::FontStyle)->Get<Rml::Style::FontStyle>();
+
+    for (auto &src : font_face_property_parser.sources) {
+        Rml::LoadFontFace(src, family, style, weight, is_fallback, face_index);
+    }
 
 	return true;
 }
@@ -752,6 +842,15 @@ bool StyleSheetParser::Parse(MediaBlockList& style_sheets, Stream* _stream, int 
 						current_block = {std::move(feature_map), UniquePtr<StyleSheet>(new StyleSheet()), modifier};
 
 						inside_media_block = true;
+						state = State::Global;
+					}
+					else if (at_rule_identifier == "font-face")
+					{
+						auto source = MakeShared<PropertySource>(stream_file_name, (int)line_number, pre_token_str);
+						ParseFontFaceBlock(source);
+                        style_sheet_property_parsers->font_face.Clear();
+
+						at_rule_name.clear();
 						state = State::Global;
 					}
 					else

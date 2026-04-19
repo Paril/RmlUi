@@ -105,6 +105,30 @@ bool FontProvider::LoadFontFace(const String& file_name, int face_index, bool fa
 	return result;
 }
 
+bool FontProvider::LoadFontFace(const String& file_name, int face_index, const String& font_family, Style::FontStyle style, Style::FontWeight weight,
+	bool fallback_face)
+{
+	FileInterface* file_interface = GetFileInterface();
+	FileHandle handle = file_interface->Open(file_name);
+
+	if (!handle)
+	{
+		Log::Message(Log::LT_ERROR, "Failed to load font face from %s, could not open file.", file_name.c_str());
+		return false;
+	}
+
+	size_t length = file_interface->Length(handle);
+
+	auto buffer_ptr = UniquePtr<byte[]>(new byte[length]);
+	byte* buffer = buffer_ptr.get();
+	file_interface->Read(buffer, length, handle);
+	file_interface->Close(handle);
+
+    bool result = Get().LoadFontFace({buffer, length}, face_index, fallback_face, std::move(buffer_ptr), file_name, font_family, style, weight);
+
+	return result;
+}
+
 bool FontProvider::LoadFontFace(Span<const byte> data, int face_index, const String& font_family, Style::FontStyle style, Style::FontWeight weight,
 	bool fallback_face)
 {
