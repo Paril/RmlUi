@@ -106,7 +106,7 @@ bool FontProvider::LoadFontFace(const String& file_name, int face_index, const S
 	file_interface->Read(buffer, length, handle);
 	file_interface->Close(handle);
 
-    bool result = Get().LoadFontFace({buffer, length}, face_index, fallback_face, std::move(buffer_ptr), file_name, font_family, style, weight);
+	bool result = Get().LoadFontFace({buffer, length}, face_index, fallback_face, std::move(buffer_ptr), file_name, font_family, style, weight);
 
 	return result;
 }
@@ -121,8 +121,8 @@ bool FontProvider::LoadFontFace(Span<const byte> data, int face_index, const Str
 	return result;
 }
 
-bool FontProvider::LoadFontFace(Span<const byte> data, int face_index, bool fallback_face, UniquePtr<byte[]> face_memory, const String& source, String font_family,
-	Style::FontStyle style, Style::FontWeight weight)
+bool FontProvider::LoadFontFace(Span<const byte> data, int face_index, bool fallback_face, UniquePtr<byte[]> face_memory, const String& source,
+	String font_family, Style::FontStyle style, Style::FontWeight weight)
 {
 	using Style::FontWeight;
 
@@ -195,7 +195,8 @@ bool FontProvider::LoadFontFace(Span<const byte> data, int face_index, bool fall
 		const FontWeight variation_weight = (variation.weight == FontWeight::Auto ? weight : variation.weight);
 		const String font_face_description = GetFontFaceDescription(font_family, style, variation_weight);
 
-		if (auto result = AddFace(ft_face, font_family, style, variation_weight, fallback_face, std::move(face_memory)); result != FontFaceLoadResult::Success)
+		if (auto result = AddFace(ft_face, font_family, style, variation_weight, fallback_face, std::move(face_memory));
+			result != FontFaceLoadResult::Success)
 		{
 			if (result == FontFaceLoadResult::Error)
 			{

@@ -48,19 +48,20 @@ FontFaceHandleDefault* FontFamily::GetFaceHandle(Style::FontStyle style, Style::
 	return matching_face->GetHandle(size, true);
 }
 
-auto FontFamily::AddFace(FontFaceHandleFreetype ft_face, Style::FontStyle style, Style::FontWeight weight, UniquePtr<byte[]> face_memory) -> AddFaceResults
+auto FontFamily::AddFace(FontFaceHandleFreetype ft_face, Style::FontStyle style, Style::FontWeight weight, UniquePtr<byte[]> face_memory)
+	-> AddFaceResults
 {
-	for (auto &face : font_faces)
+	for (auto& face : font_faces)
 	{
 		if (face.face->GetStyle() == style && face.face->GetWeight() == weight)
 		{
-			return { FontProvider::FontFaceLoadResult::Duplicate, nullptr };
+			return {FontProvider::FontFaceLoadResult::Duplicate, nullptr};
 		}
 	}
 
 	auto face = MakeUnique<FontFace>(ft_face, style, weight);
 
-	AddFaceResults result { FontProvider::FontFaceLoadResult::Success, face.get() };
+	AddFaceResults result{FontProvider::FontFaceLoadResult::Success, face.get()};
 
 	font_faces.push_back(FontFaceEntry{std::move(face), std::move(face_memory)});
 
