@@ -10,6 +10,11 @@ class FontFaceHandleDefault;
 
 class FontFamily {
 public:
+	struct AddFaceResults {
+		FontProvider::FontFaceLoadResult	error = FontProvider::FontFaceLoadResult::Success;
+		FontFace*							face = nullptr;
+	};
+
 	FontFamily(const String& name);
 	~FontFamily();
 
@@ -25,8 +30,8 @@ public:
 	/// @param[in] style The style of the new face.
 	/// @param[in] weight The weight of the new face.
 	/// @param[in] face_memory Optionally pass ownership of the face's memory to the face itself, automatically releasing it on destruction.
-	/// @return True if the face was loaded successfully, false otherwise.
-	FontProvider::FontFaceLoadResult AddFace(FontFaceHandleFreetype ft_face, Style::FontStyle style, Style::FontWeight weight, UniquePtr<byte[]> face_memory, FontFace** face);
+	/// @return A struct containing the error (if any) and the pointer to the new font face (only if error is NoError).
+	AddFaceResults AddFace(FontFaceHandleFreetype ft_face, Style::FontStyle style, Style::FontWeight weight, UniquePtr<byte[]> face_memory);
 
 	/// Releases resources owned by sized font faces, including their textures and rendered glyphs.
 	void ReleaseFontResources();

@@ -84,25 +84,7 @@ void FontProvider::ReleaseFontResources()
 
 bool FontProvider::LoadFontFace(const String& file_name, int face_index, bool fallback_face, Style::FontWeight weight)
 {
-	FileInterface* file_interface = GetFileInterface();
-	FileHandle handle = file_interface->Open(file_name);
-
-	if (!handle)
-	{
-		Log::Message(Log::LT_ERROR, "Failed to load font face from %s, could not open file.", file_name.c_str());
-		return false;
-	}
-
-	size_t length = file_interface->Length(handle);
-
-	auto buffer_ptr = UniquePtr<byte[]>(new byte[length]);
-	byte* buffer = buffer_ptr.get();
-	file_interface->Read(buffer, length, handle);
-	file_interface->Close(handle);
-
-	bool result = Get().LoadFontFace({buffer, length}, face_index, fallback_face, std::move(buffer_ptr), file_name, {}, Style::FontStyle::Normal, weight);
-
-	return result;
+	return LoadFontFace(file_name, face_index, {}, Style::FontStyle::Normal, weight, fallback_face);
 }
 
 bool FontProvider::LoadFontFace(const String& file_name, int face_index, const String& font_family, Style::FontStyle style, Style::FontWeight weight,
@@ -213,7 +195,7 @@ bool FontProvider::LoadFontFace(Span<const byte> data, int face_index, bool fall
 		const FontWeight variation_weight = (variation.weight == FontWeight::Auto ? weight : variation.weight);
 		const String font_face_description = GetFontFaceDescription(font_family, style, variation_weight);
 
-		if (auto result = AddFace(ft_face, font_family, style, variation_weight, fallback_face, std::move(face_memory)); result != FontFaceLoadResult::NoError)
+		if (auto result = AddFace(ft_face, font_family, style, variation_weight, fallback_face, std::move(face_memory)); result != FontFaceLoadResult::Success)
 		{
 			if (result == FontFaceLoadResult::Error)
 			{
@@ -248,22 +230,21 @@ auto FontProvider::AddFace(FontFaceHandleFreetype face, const String& family, St
 		font_families[family_lower] = std::move(font_family_ptr);
 	}
 
-	FontFace* font_face_result;
-	FontFaceLoadResult result = font_family->AddFace(face, style, weight, std::move(face_memory), &font_face_result);
+	FontFamily::AddFaceResults results = font_family->AddFace(face, style, weight, std::move(face_memory));
 
-	if (result == FontFaceLoadResult::NoError)
+	if (results.error == FontFaceLoadResult::Success)
 	{
-		if (font_face_result && fallback_face)
+		if (results.face && fallback_face)
 		{
-			auto it_fallback_face = std::find(fallback_font_faces.begin(), fallback_font_faces.end(), font_face_result);
+			auto it_fallback_face = std::find(fallback_font_faces.begin(), fallback_font_faces.end(), results.face);
 			if (it_fallback_face == fallback_font_faces.end())
 			{
-				fallback_font_faces.push_back(font_face_result);
+				fallback_font_faces.push_back(results.face);
 			}
 		}
 	}
 
-	return result;
+	return results.error;
 }
 
 } // namespace Rml

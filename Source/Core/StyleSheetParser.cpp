@@ -13,7 +13,6 @@
 #include "ControlledLifetimeResource.h"
 #include "StyleSheetFactory.h"
 #include "StyleSheetNode.h"
-#include "../../Include/RmlUi/Core.h"
 #include <algorithm>
 #include <string.h>
 
@@ -297,11 +296,11 @@ public:
         // standard
 	    specification.RegisterProperty("font-family", "", false, false, CastId(FontFaceId::FontFamily)).AddParser("string");
 	    specification.RegisterProperty("font-weight", "all", false, false, CastId(FontFaceId::FontWeight)).AddParser("keyword", "all=0, normal=400, bold=700").AddParser("number");
-	    specification.RegisterProperty("font-style", "normal", false, false, CastId(FontFaceId::FontStyle)).AddParser("keyword", "normal, italic").AddParser("number");
+	    specification.RegisterProperty("font-style", "normal", false, false, CastId(FontFaceId::FontStyle)).AddParser("keyword", "normal, italic");
         // src handled by Parse
 
         // extended
-        specification.RegisterProperty("--rmlui-fallback-face", "false", false, false, CastId(FontFaceId::FallbackFace)).AddParser("keyword", "false=0, true=1").AddParser("number");
+        specification.RegisterProperty("--rmlui-fallback-face", "false", false, false, CastId(FontFaceId::FallbackFace)).AddParser("keyword", "false, true");
         specification.RegisterProperty("--rmlui-face-index", "0", false, false, CastId(FontFaceId::FaceIndex)).AddParser("number");
 	}
 

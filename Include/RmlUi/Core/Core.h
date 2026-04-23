@@ -97,7 +97,7 @@ RMLUICORE_API Context* GetContext(int index);
 /// @return The total number of active RmlUi contexts.
 RMLUICORE_API int GetNumContexts();
 
-/// Adds a new font face to the font engine. The face's family, style, and weight will be determined from the face itself.
+/// Adds a new font face from file to the font engine. The face's family, style, and weight will be determined from the face itself.
 /// @param[in] file_path The path to the file to load the face from. The path is passed directly to the file interface which is used to load the file.
 /// The default file interface accepts both absolute paths and paths relative to the working directory.
 /// @param[in] fallback_face True to use this font face for unknown characters in other font faces.
@@ -108,7 +108,7 @@ RMLUICORE_API int GetNumContexts();
 RMLUICORE_API bool LoadFontFace(const String& file_path, bool fallback_face = false, Style::FontWeight weight = Style::FontWeight::Auto,
 	int face_index = 0);
 
-/// Adds a new font face from memory to the font engine. The face's family, style, and weight are given by the parameters.
+/// Adds a new font face from file to the font engine. The face's family, style, and weight are given by the parameters.
 /// @param[in] data The font data.
 /// @param[in] family The family to register the font as.
 /// @param[in] style The style to register the font as.
