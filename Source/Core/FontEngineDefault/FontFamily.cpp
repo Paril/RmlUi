@@ -49,7 +49,7 @@ FontFaceHandleDefault* FontFamily::GetFaceHandle(Style::FontStyle style, Style::
 }
 
 auto FontFamily::AddFace(FontFaceHandleFreetype ft_face, Style::FontStyle style, Style::FontWeight weight, UniquePtr<byte[]> face_memory)
-	-> AddFaceResults
+	-> AddFaceResult
 {
 	for (auto& face : font_faces)
 	{
@@ -61,7 +61,7 @@ auto FontFamily::AddFace(FontFaceHandleFreetype ft_face, Style::FontStyle style,
 
 	auto face = MakeUnique<FontFace>(ft_face, style, weight);
 
-	AddFaceResults result{FontProvider::FontFaceLoadResult::Success, face.get()};
+	AddFaceResult result{FontProvider::FontFaceLoadResult::Success, face.get()};
 
 	font_faces.push_back(FontFaceEntry{std::move(face), std::move(face_memory)});
 

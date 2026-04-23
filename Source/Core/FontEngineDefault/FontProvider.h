@@ -17,12 +17,9 @@ class FontFaceHandleDefault;
 class FontProvider {
 public:
 	enum class FontFaceLoadResult {
-		/// a new font was added to the global font face list
-		Success,
-		/// the font is valid, but is already in the font face list
-		Duplicate,
-		/// an error occurred while trying to load this font face
-		Error
+		Success,   /// A new font was added to the global font face list.
+		Duplicate, /// The font is valid but is already in the font face list.
+		Error      /// An error occurred while trying to load this font face.
 	};
 
 	static bool Initialise();

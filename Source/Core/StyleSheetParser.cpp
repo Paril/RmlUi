@@ -288,35 +288,43 @@ private:
 	static PropertyId CastId(FontFaceId id) { return static_cast<PropertyId>(id); }
 
 public:
-    StringList sources;
+	StringList sources;
 
-    const PropertySpecification& GetPropertySpecification() { return specification; }
+	const PropertySpecification& GetPropertySpecification() { return specification; }
 
 	FontFacePropertyParser() : specification(5, 0)
 	{
-        // standard
-	    specification.RegisterProperty("font-family", "", false, false, CastId(FontFaceId::FontFamily)).AddParser("string");
-	    specification.RegisterProperty("font-weight", "all", false, false, CastId(FontFaceId::FontWeight)).AddParser("keyword", "all=0, normal=400, bold=700").AddParser("number");
-	    specification.RegisterProperty("font-style", "normal", false, false, CastId(FontFaceId::FontStyle)).AddParser("keyword", "normal, italic");
-        // src handled by Parse
+		// standard
+		specification.RegisterProperty("font-family", "", false, false, CastId(FontFaceId::FontFamily)).AddParser("string");
+		specification.RegisterProperty("font-weight", "all", false, false, CastId(FontFaceId::FontWeight))
+			.AddParser("keyword", "all=0, normal=400, bold=700")
+			.AddParser("number");
+		specification.RegisterProperty("font-style", "normal", false, false, CastId(FontFaceId::FontStyle)).AddParser("keyword", "normal, italic");
+		// src handled by Parse
 
-        // extended
-        specification.RegisterProperty("--rmlui-fallback-face", "false", false, false, CastId(FontFaceId::FallbackFace)).AddParser("keyword", "false, true");
-        specification.RegisterProperty("--rmlui-face-index", "0", false, false, CastId(FontFaceId::FaceIndex)).AddParser("number");
+		// extended
+		specification.RegisterProperty("--rmlui-fallback-face", "false", false, false, CastId(FontFaceId::FallbackFace))
+			.AddParser("keyword", "false, true");
+		specification.RegisterProperty("--rmlui-face-index", "0", false, false, CastId(FontFaceId::FaceIndex)).AddParser("number");
 	}
 
 	void SetTargetProperties(PropertyDictionary* _properties) { properties = _properties; }
 
-	void Clear() { properties = nullptr; sources.clear(); }
+	void Clear()
+	{
+		properties = nullptr;
+		sources.clear();
+	}
 
 	bool Parse(const String& name, const String& value) override
 	{
 		RMLUI_ASSERT(properties);
 
-        if (name == "src") {
-            StringUtilities::ExpandString(sources, value);
-            return true;
-        }
+		if (name == "src")
+		{
+			StringUtilities::ExpandString(sources, value);
+			return true;
+		}
 
 		return specification.ParsePropertyDeclaration(*properties, name, value);
 	}
@@ -519,7 +527,7 @@ bool StyleSheetParser::ParseFontFaceBlock(const SharedPtr<const PropertySource>&
 {
 	auto& font_face_property_parser = style_sheet_property_parsers->font_face;
 
-    PropertyDictionary properties;
+	PropertyDictionary properties;
 	font_face_property_parser.SetTargetProperties(&properties);
 
 	ReadProperties(font_face_property_parser);
@@ -527,31 +535,31 @@ bool StyleSheetParser::ParseFontFaceBlock(const SharedPtr<const PropertySource>&
 	// Set non-defined properties to their defaults
 	font_face_property_parser.GetPropertySpecification().SetPropertyDefaults(properties);
 	properties.SetSourceOfAllProperties(source);
-    
-    // check required properties
-    if (!properties.GetProperty(static_cast<Rml::PropertyId>(Rml::FontFaceId::FontFamily))) {
-		Log::Message(Log::LT_WARNING, "@font-face block missing font-family at %s:%d.", stream_file_name.c_str(),
-			line_number);
-        return false;
-    }
 
-    if (font_face_property_parser.sources.empty()) {
-		Log::Message(Log::LT_WARNING, "@font-face block missing src at %s:%d.", stream_file_name.c_str(),
-			line_number);
-        return false;
-    }
+	// check required properties
+	if (!properties.GetProperty(static_cast<Rml::PropertyId>(Rml::FontFaceId::FontFamily)))
+	{
+		Log::Message(Log::LT_WARNING, "@font-face block missing font-family at %s:%d.", stream_file_name.c_str(), line_number);
+		return false;
+	}
 
-    // grab data
-    auto get_property = [&properties](Rml::FontFaceId id) { return properties.GetProperty(static_cast<Rml::PropertyId>(id)); };
-    const Rml::String family = get_property(Rml::FontFaceId::FontFamily)->Get<Rml::String>();
-    const bool is_fallback = get_property(Rml::FontFaceId::FallbackFace)->Get<bool>();
-    const int face_index = get_property(Rml::FontFaceId::FaceIndex)->Get<int>();
-    const Rml::Style::FontWeight weight = get_property(Rml::FontFaceId::FontWeight)->Get<Rml::Style::FontWeight>();
-    const Rml::Style::FontStyle style = get_property(Rml::FontFaceId::FontStyle)->Get<Rml::Style::FontStyle>();
+	if (font_face_property_parser.sources.empty())
+	{
+		Log::Message(Log::LT_WARNING, "@font-face block missing src at %s:%d.", stream_file_name.c_str(), line_number);
+		return false;
+	}
 
-    for (auto &src : font_face_property_parser.sources) {
-        Rml::LoadFontFace(src, family, style, weight, is_fallback, face_index);
-    }
+	auto get_property = [&properties](FontFaceId id) { return properties.GetProperty(static_cast<PropertyId>(id)); };
+	const String family = get_property(FontFaceId::FontFamily)->Get<String>();
+	const bool is_fallback = get_property(FontFaceId::FallbackFace)->Get<bool>();
+	const int face_index = get_property(FontFaceId::FaceIndex)->Get<int>();
+	const Style::FontWeight weight = get_property(FontFaceId::FontWeight)->Get<Style::FontWeight>();
+	const Style::FontStyle style = get_property(FontFaceId::FontStyle)->Get<Style::FontStyle>();
+
+	for (const String& src : font_face_property_parser.sources)
+	{
+		Rml::LoadFontFace(src, family, style, weight, is_fallback, face_index);
+	}
 
 	return true;
 }
@@ -848,7 +856,7 @@ bool StyleSheetParser::Parse(MediaBlockList& style_sheets, Stream* _stream, int 
 					{
 						auto source = MakeShared<PropertySource>(stream_file_name, (int)line_number, pre_token_str);
 						ParseFontFaceBlock(source);
-                        style_sheet_property_parsers->font_face.Clear();
+						style_sheet_property_parsers->font_face.Clear();
 
 						at_rule_name.clear();
 						state = State::Global;

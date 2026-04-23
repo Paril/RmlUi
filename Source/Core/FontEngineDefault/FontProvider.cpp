@@ -231,21 +231,20 @@ auto FontProvider::AddFace(FontFaceHandleFreetype face, const String& family, St
 		font_families[family_lower] = std::move(font_family_ptr);
 	}
 
-	FontFamily::AddFaceResults results = font_family->AddFace(face, style, weight, std::move(face_memory));
+	const auto [result, face_ptr] = font_family->AddFace(face, style, weight, std::move(face_memory));
+	if (result != FontFaceLoadResult::Success)
+		return result;
 
-	if (results.error == FontFaceLoadResult::Success)
+	if (face_ptr && fallback_face)
 	{
-		if (results.face && fallback_face)
+		auto it_fallback_face = std::find(fallback_font_faces.begin(), fallback_font_faces.end(), face_ptr);
+		if (it_fallback_face == fallback_font_faces.end())
 		{
-			auto it_fallback_face = std::find(fallback_font_faces.begin(), fallback_font_faces.end(), results.face);
-			if (it_fallback_face == fallback_font_faces.end())
-			{
-				fallback_font_faces.push_back(results.face);
-			}
+			fallback_font_faces.push_back(face_ptr);
 		}
 	}
 
-	return results.error;
+	return result;
 }
 
 } // namespace Rml
